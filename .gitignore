@@ -3,3 +3,4 @@ Makefile
 *.pro.user
 execs/nmea-tests
 *.qmake.stash
+*.swp
