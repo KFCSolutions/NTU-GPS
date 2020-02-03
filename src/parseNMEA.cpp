@@ -6,13 +6,15 @@ namespace NMEA
 
   bool isWellFormedSentence(std::string)
   {
-      // Stub definition, needs implementing
+      // Stub definition, needs implementing#
+      // Jamie Will Do this
       return false;
   }
 
   bool hasValidChecksum(std::string)
   {
       // Stub definition, needs implementing
+      // Jamie Will Do this
       return false;
   }
 
