@@ -1,0 +1,4 @@
+Makefile
+*.o
+*.pro.user
+execs/nmea-tests
