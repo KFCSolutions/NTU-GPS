@@ -1,16 +1,37 @@
 #include "earth.h"
 #include "parseNMEA.h"
-
+#include <ctype.h>
+#include <locale> 
 #include <sstream>
-
+#include <iostream>
 namespace NMEA
 {
 
-  bool isWellFormedSentence(std::string)
+  bool isWellFormedSentence(std::string gpsData)
   {
-    // Stub definition, needs implementing#
-    // Jamie Will Do this
-    return false;
+    const std::locale loc;
+
+    if (gpsData.substr(0,3) != "$GP")
+        return false;
+
+    std::string indent = gpsData.substr(3,3);
+    for (std::string::iterator it=indent.begin(); it!=indent.end(); ++it)
+        if (!std::isalpha(*it,loc))
+            return false;
+
+    if (gpsData[gpsData.length() - 3] != '*') 
+            return false;
+
+    if ((!isxdigit(gpsData[gpsData.length() - 2])) || !isxdigit(gpsData[gpsData.length() - 1]))
+        return false;
+
+    gpsData.erase(gpsData.end() - 3);
+    gpsData.erase(0, 1);
+    
+    if ((gpsData.find('*') != std::string::npos)  || (gpsData.find('$') != std::string::npos))
+        return false;
+
+    return true;
   }
 
   bool hasValidChecksum(std::string)
