@@ -11,26 +11,33 @@ namespace NMEA
   {
     const std::locale loc;
 
+    // Checks to see if the first 3 characters of the GPS file contain $GP
     if (gpsData.substr(0,3) != "$GP")
         return false;
 
+    // Loops through the 3 characters after $GPS and checks if they are English alphabet characters
     std::string indent = gpsData.substr(3,3);
     for (std::string::iterator it=indent.begin(); it!=indent.end(); ++it)
         if (!std::isalpha(*it,loc))
             return false;
 
+    // Check if the third character from the end is an astrix
     if (gpsData[gpsData.length() - 3] != '*') 
         return false;
 
+    // Check if the last two characters are valid hex values
     if ((!isxdigit(gpsData[gpsData.length() - 2])) || !isxdigit(gpsData[gpsData.length() - 1]))
         return false;
 
+    // Sanitize the string and remove valid locations for * and $
     gpsData.erase(gpsData.end() - 3);
     gpsData.erase(0, 1);
     
+    // Check to see if the new string contains * and $ and if it does return false
     if ((gpsData.find('*') != std::string::npos)  || (gpsData.find('$') != std::string::npos))
         return false;
 
+    // All checks passed
     return true;
   }
 
