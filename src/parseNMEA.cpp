@@ -4,6 +4,7 @@
 #include <locale> 
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 namespace NMEA
 {
 
@@ -41,11 +42,34 @@ namespace NMEA
     return true;
   }
 
-  bool hasValidChecksum(std::string)
+  bool hasValidChecksum(std::string gpsData)
   {
-    // Stub definition, needs implementing
-    // Jamie Will Do this
-    return false;
+    // Get the checksum value from the string
+    std::string checkSum = gpsData.substr(gpsData.length() - 2,2);
+    // Remove the checksum value from the string along with the $ from the start
+    gpsData.erase(gpsData.length() - 3, 3);
+    gpsData.erase(0, 1);
+
+    // XOR the string to create the checksum
+    int lastNum = 0;
+    for( long unsigned int i = 0; i < gpsData.length(); i++) {
+        lastNum ^= int(gpsData[i]);
+    }
+
+    // Convert generated checksum to hex
+    char generatedCheckSum[20];
+    sprintf(generatedCheckSum, "%X", lastNum);
+
+    // Check checksum from string and make it upper case
+	std::for_each(checkSum.begin(), checkSum.end(), [](char & c) {
+		c = ::toupper(c);
+	});
+
+    // Cross check checksum from file and generated checksum
+    if ((generatedCheckSum !=  checkSum)) 
+        return false;
+        
+    return true;
   }
 
   SentenceData extractSentenceData(std::string sen)
