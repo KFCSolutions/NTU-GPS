@@ -20,7 +20,7 @@ namespace NMEA
             return false;
 
     if (gpsData[gpsData.length() - 3] != '*') 
-            return false;
+        return false;
 
     if ((!isxdigit(gpsData[gpsData.length() - 2])) || !isxdigit(gpsData[gpsData.length() - 1]))
         return false;
