@@ -2,10 +2,14 @@
 #include "parseNMEA.h"
 #include <bits/c++config.h>
 #include <ctype.h>
+#include <regex>
 #include <locale> 
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <stdexcept>
+std::string supported_formats[] = {"GLL", "GGA", "RMC"};
+
 namespace NMEA
 {
 
@@ -15,29 +19,29 @@ namespace NMEA
 
     // Checks to see if the first 3 characters of the GPS file contain $GP
     if (gpsData.substr(0,3) != "$GP")
-        return false;
+      return false;
 
     // Loops through the 3 characters after $GPS and checks if they are English alphabet characters
     std::string indent = gpsData.substr(3,3);
     for (std::string::iterator it=indent.begin(); it!=indent.end(); ++it)
-        if (!std::isalpha(*it,loc))
-            return false;
+      if (!std::isalpha(*it,loc))
+        return false;
 
     // Check if the third character from the end is an astrix
     if (gpsData[gpsData.length() - 3] != '*') 
-        return false;
+      return false;
 
     // Check if the last two characters are valid hex values
     if ((!isxdigit(gpsData[gpsData.length() - 2])) || !isxdigit(gpsData[gpsData.length() - 1]))
-        return false;
+      return false;
 
     // Sanitize the string and remove valid locations for * and $
     gpsData.erase(gpsData.end() - 3);
     gpsData.erase(0, 1);
-    
+
     // Check to see if the new string contains * and $ and if it does return false
     if ((gpsData.find('*') != std::string::npos)  || (gpsData.find('$') != std::string::npos))
-        return false;
+      return false;
 
     // All checks passed
     return true;
@@ -54,7 +58,7 @@ namespace NMEA
     // XOR the string to create the checksum
     int lastNum = 0;
     for( long unsigned int i = 0; i < gpsData.length(); i++) {
-        lastNum ^= int(gpsData[i]);
+      lastNum ^= int(gpsData[i]);
     }
 
     // Convert generated checksum to hex
@@ -62,14 +66,14 @@ namespace NMEA
     sprintf(generatedCheckSum, "%X", lastNum);
 
     // Check checksum from string and make it upper case
-	std::for_each(checkSum.begin(), checkSum.end(), [](char & c) {
-		c = ::toupper(c);
-	});
+    std::for_each(checkSum.begin(), checkSum.end(), [](char & c) {
+        c = ::toupper(c);
+        });
 
     // Cross check checksum from file and generated checksum
     if ((generatedCheckSum !=  checkSum)) 
-        return false;
-        
+      return false;
+
     return true;
   }
 
@@ -92,7 +96,6 @@ namespace NMEA
 
     // remove everything that is not the format string from formatRet
     formatRet.erase(formatLen, std::string::npos); 
-    std::cout << "first: " << formatRet << std::endl;
     std::size_t found = fieldsStr.find(',');
     if(found == std::string::npos){
       // empty field set
@@ -119,7 +122,7 @@ namespace NMEA
     // use formatRet and fieldsRet to init the return value
     SentenceData ret;
 
-    
+
     ret.first = formatRet;
     ret.second = fieldsRet;
     return ret;
@@ -131,10 +134,30 @@ namespace NMEA
     return GPS::Earth::NorthPole;
   }
 
-  Route routeFromLog(std::istream &)
+  Route routeFromLog(std::istream & fs)
   {
-    // Stub definition, needs implementing
-    return {};
-  }
+    Route ret;
+    for(std::string line; getline(fs, line);){
+      if(!isWellFormedSentence(line)){
+        // ignore if not valid sentence
+        continue;
+      }
+      if(!hasValidChecksum(line)){
+        // ignore if checksum not valid
+        continue;
+      }
+      SentenceData data = extractSentenceData(line);
 
+      if(std::find(std::begin(supported_formats), std::end(supported_formats), data.first) == std::end(supported_formats)){
+        // ignore if format not in supported formats
+        continue;
+      }
+      if(data.second.empty()){
+        // ignore if empty data
+        continue;
+      }
+      ret.push_back(positionFromSentenceData(data));
+    }
+    return ret;
+  }
 }
