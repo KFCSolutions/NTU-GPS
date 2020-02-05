@@ -1,5 +1,6 @@
 #include "earth.h"
 #include "parseNMEA.h"
+#include <bits/c++config.h>
 #include <ctype.h>
 #include <locale> 
 #include <sstream>
@@ -91,6 +92,15 @@ namespace NMEA
 
     // remove everything that is not the format string from formatRet
     formatRet.erase(formatLen, std::string::npos); 
+    std::cout << "first: " << formatRet << std::endl;
+    std::size_t found = fieldsStr.find(',');
+    if(found == std::string::npos){
+      // empty field set
+      SentenceData ret;
+      ret.first = formatRet;
+      ret.second = {};
+      return ret;
+    }
 
     //remove the format string and the suffix from fieldsStr
     fieldsStr.erase(0, formatLen + 1);
@@ -108,6 +118,8 @@ namespace NMEA
 
     // use formatRet and fieldsRet to init the return value
     SentenceData ret;
+
+    
     ret.first = formatRet;
     ret.second = fieldsRet;
     return ret;
