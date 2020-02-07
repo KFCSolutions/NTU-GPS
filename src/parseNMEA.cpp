@@ -143,8 +143,11 @@ namespace NMEA
   {
     float latitude = 0;
     float longitude = 0;
-
+    if (senData.second.empty())
+      throw std::invalid_argument("Filed Empty");
     if(senData.first == "GLL"){
+          if (senData.second.size() < 5)
+            throw std::invalid_argument("Missing Param");
           latitude = convert_NMEA(senData.second[0]);
           longitude = convert_NMEA(senData.second[2]);
           if (senData.second[3] == "W")
@@ -153,6 +156,8 @@ namespace NMEA
             latitude = -fabs(latitude);
           return GPS::Position(latitude,longitude,0);  
     }else if(senData.first == "RMC"){
+          if (senData.second.size() < 11)
+            throw std::invalid_argument("Missing Param");
           latitude = convert_NMEA(senData.second[2]);
           longitude = convert_NMEA(senData.second[4]);
           if (senData.second[5] == "W")
