@@ -4,9 +4,13 @@
 #include <ctype.h>
 #include <regex>
 #include <locale> 
+#include <cmath>
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include "geometry.h"
+#include "earth.h"
+
 #include <stdexcept>
 std::string supported_formats[] = {"GLL", "GGA", "RMC"};
 
@@ -128,10 +132,44 @@ namespace NMEA
     return ret;
   }
 
-  GPS::Position positionFromSentenceData(SentenceData)
+  float convert_NMEA(std::string strData) {
+    int DD = std::stof(strData) / 100;
+    float SS = std::stof(strData) - DD * 100;
+    SS = DD + (SS / 60);
+    return SS;
+  }
+
+  GPS::Position positionFromSentenceData(SentenceData senData)
   {
-    // Stub definition, needs implementing
-    return GPS::Earth::NorthPole;
+    float latitude = 0;
+    float longitude = 0;
+
+    if(senData.first == "GLL"){
+          latitude = convert_NMEA(senData.second[0]);
+          longitude = convert_NMEA(senData.second[2]);
+          if (senData.second[3] == "W")
+            longitude = -fabs(longitude);
+          if (senData.second[1] == "S") 
+            latitude = -fabs(latitude);
+          return GPS::Position(latitude,longitude,0);  
+    }else if(senData.first == "RMC"){
+          latitude = convert_NMEA(senData.second[2]);
+          longitude = convert_NMEA(senData.second[4]);
+          if (senData.second[5] == "W")
+            longitude = -fabs(longitude);
+          if (senData.second[3] == "S") 
+            latitude = -fabs(latitude);
+          return GPS::Position(latitude,longitude,0);  
+    }else if(senData.first == "GGA"){
+          latitude = convert_NMEA(senData.second[1]);
+          longitude = convert_NMEA(senData.second[3]); 
+          if (senData.second[4] == "W")
+            longitude = -fabs(longitude);
+          if (senData.second[2] == "S") 
+            latitude = -fabs(latitude);
+          return GPS::Position(latitude,longitude,std::stof(senData.second[8]));  
+    } else
+      throw std::invalid_argument("Invalid syntax.");
   }
 
   Route routeFromLog(std::istream & fs)
