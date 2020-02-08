@@ -181,6 +181,7 @@ namespace NMEA
   {
     Route ret;
     for(std::string line; getline(fs, line);){
+			std::cout << "Testing: " << line << std::endl;
       if(!isWellFormedSentence(line)){
         // ignore if not valid sentence
         continue;
@@ -190,6 +191,19 @@ namespace NMEA
         continue;
       }
       SentenceData data = extractSentenceData(line);
+
+      if (data.first == "GLL") {
+				std::regex re("\\$GPGLL,[0-9]*.[0-9]*,N,[0-9]*.[0-9]*,W,[0-9]*\\*[A-Za-z0-9]{2,}");
+				if(!std::regex_match(line, re)) continue;
+      }
+      else if (data.first == "RMC") {
+				std::regex re("\\$GPRMC,[0-9]*.[0-9]*,[AV],[0-9]*.[0-9]*,N,[0-9]*.[0-9]*,[EW],[0-9]*.[0-9]*,[0-9]*.[0-9]*,[0-9]*,,[AW]\\*[A-Za-z0-9]{2,}");
+				if(!std::regex_match(line, re)) continue;
+      }
+      else if (data.first == "GGA") {
+				std::regex re("\\$GPGGA,[0-9]*.[0-9]*,[0-9]*.[0-9]*,N,[0-9]*.[0-9]*,W,[0-9]*,[0-9]*,,-?[0-9]*.[0-9]*,M,,M,,\\*[A-Za-z0-9]{2,}");
+				if(!std::regex_match(line, re)) continue;
+      }
 
       if(std::find(std::begin(supported_formats), std::end(supported_formats), data.first) == std::end(supported_formats)){
         // ignore if format not in supported formats
