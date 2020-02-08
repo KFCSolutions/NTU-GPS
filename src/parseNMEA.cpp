@@ -132,48 +132,44 @@ namespace NMEA
     return ret;
   }
 
-  float convert_NMEA(std::string strData) {
-    int DD = std::stof(strData) / 100;
-    float SS = std::stof(strData) - DD * 100;
-    SS = DD + (SS / 60);
-    return SS;
+  float getDegreeConversion(std::string nmeaString) {
+    int DD = std::stof(nmeaString) / 100;
+    return DD + ((std::stof(nmeaString) - DD * 100) / 60);
+  }
+
+  GPS::Position convertPosition (SentenceData senData,long unsigned int size, int NS, int EW,float other = 0) {
+    //Gets the degree conversion for the NMEA DATA 
+    float latitude = getDegreeConversion(senData.second[NS - 1]);
+    float longitude = getDegreeConversion(senData.second[EW - 1]);
+
+    // Checks to see if the data has any invalid params
+    if (senData.second.size() < size)
+      throw std::invalid_argument("Missing Param");
+
+    // Checks to see if the NMEA data is West or South and if it is invert it
+    if (senData.second[EW] == "W")
+      longitude = -fabs(longitude);
+    if (senData.second[NS] == "S") 
+      latitude = -fabs(latitude);
+
+    // Return Pos
+    return GPS::Position(latitude,longitude,other); 
   }
 
   GPS::Position positionFromSentenceData(SentenceData senData)
   {
-    float latitude = 0;
-    float longitude = 0;
+    // Checks if second part of sendata is empty. Return if it is
     if (senData.second.empty())
       throw std::invalid_argument("Filed Empty");
-    if(senData.first == "GLL"){
-          if (senData.second.size() < 5)
-            throw std::invalid_argument("Missing Param");
-          latitude = convert_NMEA(senData.second[0]);
-          longitude = convert_NMEA(senData.second[2]);
-          if (senData.second[3] == "W")
-            longitude = -fabs(longitude);
-          if (senData.second[1] == "S") 
-            latitude = -fabs(latitude);
-          return GPS::Position(latitude,longitude,0);  
-    }else if(senData.first == "RMC"){
-          if (senData.second.size() < 11)
-            throw std::invalid_argument("Missing Param");
-          latitude = convert_NMEA(senData.second[2]);
-          longitude = convert_NMEA(senData.second[4]);
-          if (senData.second[5] == "W")
-            longitude = -fabs(longitude);
-          if (senData.second[3] == "S") 
-            latitude = -fabs(latitude);
-          return GPS::Position(latitude,longitude,0);  
-    }else if(senData.first == "GGA"){
-          latitude = convert_NMEA(senData.second[1]);
-          longitude = convert_NMEA(senData.second[3]); 
-          if (senData.second[4] == "W")
-            longitude = -fabs(longitude);
-          if (senData.second[2] == "S") 
-            latitude = -fabs(latitude);
-          return GPS::Position(latitude,longitude,std::stof(senData.second[8]));  
-    } else
+
+    //Need to fix these magic numbers. Calls and retuns the correct position for all supported formats
+    if(senData.first == "GLL")
+      return convertPosition(senData, 5, 1, 3);
+    else if(senData.first == "RMC")
+      return convertPosition(senData, 11, 3, 5); 
+    else if(senData.first == "GGA")
+      return convertPosition(senData, 14, 2, 4, std::stof(senData.second[8]));
+    else
       throw std::invalid_argument("Invalid syntax.");
   }
 
