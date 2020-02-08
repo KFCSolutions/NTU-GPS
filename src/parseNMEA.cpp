@@ -181,38 +181,39 @@ namespace NMEA
   {
     Route ret;
     for(std::string line; getline(fs, line);){
-			std::cout << "Testing: " << line << std::endl;
-      if(!isWellFormedSentence(line)){
-        // ignore if not valid sentence
+      // ignore if not valid sentence
+      if(!isWellFormedSentence(line))
         continue;
-      }
-      if(!hasValidChecksum(line)){
-        // ignore if checksum not valid
+      // ignore if checksum not valid
+      if(!hasValidChecksum(line))
         continue;
-      }
+
       SentenceData data = extractSentenceData(line);
 
+      // Checks if GLL strings are valid with REGEX and if they are not skip it.
       if (data.first == "GLL") {
 				std::regex re("\\$GPGLL,[0-9]*.[0-9]*,N,[0-9]*.[0-9]*,W,[0-9]*\\*[A-Za-z0-9]{2,}");
 				if(!std::regex_match(line, re)) continue;
       }
+      // Checks if RMC strings are valid with REGEX and if they are not skip it.
       else if (data.first == "RMC") {
 				std::regex re("\\$GPRMC,[0-9]*.[0-9]*,[AV],[0-9]*.[0-9]*,N,[0-9]*.[0-9]*,[EW],[0-9]*.[0-9]*,[0-9]*.[0-9]*,[0-9]*,,[AW]\\*[A-Za-z0-9]{2,}");
 				if(!std::regex_match(line, re)) continue;
       }
+      // Checks if GGA strings are valid with REGEX and if they are not skip it.
       else if (data.first == "GGA") {
 				std::regex re("\\$GPGGA,[0-9]*.[0-9]*,[0-9]*.[0-9]*,N,[0-9]*.[0-9]*,W,[0-9]*,[0-9]*,,-?[0-9]*.[0-9]*,M,,M,,\\*[A-Za-z0-9]{2,}");
 				if(!std::regex_match(line, re)) continue;
       }
 
-      if(std::find(std::begin(supported_formats), std::end(supported_formats), data.first) == std::end(supported_formats)){
-        // ignore if format not in supported formats
+      // ignore if format not in supported formats
+      if(std::find(std::begin(supported_formats), std::end(supported_formats), data.first) == std::end(supported_formats))
         continue;
-      }
-      if(data.second.empty()){
-        // ignore if empty data
+      
+      // ignore if empty data
+      if(data.second.empty())
         continue;
-      }
+      
       ret.push_back(positionFromSentenceData(data));
     }
     return ret;
