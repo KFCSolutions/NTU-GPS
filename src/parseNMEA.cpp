@@ -14,15 +14,11 @@ namespace NMEA
 
   bool isWellFormedSentence(std::string gpsData)
   {
-
+    const int FIRST_CHARACTER_LENGTH = 1;
     const int STRING_START = 0;
     const int PREFIX_LENGTH = 3;
-    const int NMEA_TYPE_LENGTH = 3;
-    const int NMEA_TYPE_START = 3;
-    const int NMEA_SECTION_END = gpsData.length() - 3;
-    const int CHECKSUM_LOC1 = gpsData.length() - 2;
-    const int CHECKSUM_LOC2 = gpsData.length() - 1;
-    const int FIRST_CHARACTER_LENGTH = 1;
+    const int NMEA_TYPE_LENGTH = 3, NMEA_TYPE_START = 3, NMEA_SECTION_END = gpsData.length() - 3;
+    const int CHECKSUM_LOC1 = gpsData.length() - 2, CHECKSUM_LOC2 = gpsData.length() - 1;
 
     // Checks to see if the first 3 characters of the GPS file contain $GP
     if (gpsData.substr(STRING_START,PREFIX_LENGTH) != "$GP")
@@ -31,7 +27,7 @@ namespace NMEA
     // Regex Check For Is Upper case
     std::string indent = gpsData.substr(NMEA_TYPE_START,NMEA_TYPE_LENGTH);
     if (!std::regex_match(indent, std::regex("[A-Z]{3,3}")))
-         return false;
+      return false;
 
     // Check if the third character from the end is an astrix
     if (gpsData[NMEA_SECTION_END] != '*') 
@@ -57,10 +53,8 @@ namespace NMEA
   {
     const int STRING_START = 0;
     const int FIRST_CHARACTER_LENGTH = 1;
-    const int CHECKSUM_START = gpsData.length() - 2;
-    const int CHECKSUM_LENGTH = 2;
-    const int POST_CHECKSUM_DATA_START = gpsData.length() - 3;
-    const int POST_CHECKSUM_DATA_LENGTH = 3;
+    const int CHECKSUM_START = gpsData.length() - 2, CHECKSUM_LENGTH = 2;
+    const int POST_CHECKSUM_DATA_START = gpsData.length() - 3, POST_CHECKSUM_DATA_LENGTH = 3;
 
     // Get the checksum value from the string
     std::string checkSum = gpsData.substr(CHECKSUM_START,CHECKSUM_LENGTH);
@@ -93,23 +87,21 @@ namespace NMEA
 
   SentenceData extractSentenceData(std::string sen)
   {
-    // prefixLen = length of NMEA prefix ($GP)
-    // suffixLen = length of checksum suffix (*FF)
-    // formatLen = length of sentance format string (GSV)
-    const int prefixLen = 3;
-    const int suffixLen = 3;
-    const int formatLen = 3;
+    // PREFIX_LENGTH = length of NMEA prefix ($GP)
+    // SUFFIX_LENGTH = length of checksum suffix (*FF)
+    // FORMAT_LENGTH = length of sentance format string (GSV)
+    const int PREFIX_LENGTH = 3, SUFFIX_LENGTH = 3, FORMAT_LENGTH = 3;
 
     // variables used for operations 
     std::string formatRet, fieldsStr;
     formatRet = sen;
 
     // remove prefix from formatRet & assign it to fieldsStr
-    formatRet.erase(0, prefixLen); 
+    formatRet.erase(0, PREFIX_LENGTH); 
     fieldsStr = formatRet;
 
     // remove everything that is not the format string from formatRet
-    formatRet.erase(formatLen, std::string::npos); 
+    formatRet.erase(FORMAT_LENGTH, std::string::npos); 
     std::size_t found = fieldsStr.find(',');
     if(found == std::string::npos){
       // empty field set
@@ -120,8 +112,8 @@ namespace NMEA
     }
 
     //remove the format string and the suffix from fieldsStr
-    fieldsStr.erase(0, formatLen + 1);
-    fieldsStr.erase(fieldsStr.length() - suffixLen);
+    fieldsStr.erase(0, FORMAT_LENGTH + 1);
+    fieldsStr.erase(fieldsStr.length() - SUFFIX_LENGTH);
 
     std::vector<std::string> fieldsRet;
 
@@ -172,19 +164,9 @@ namespace NMEA
 
   GPS::Position positionFromSentenceData(SentenceData senData)
   {
-
-    const int GLL_SIZE = 5;
-    const int GLL_NS_CHAR_LOC = 1;
-    const int GLL_EW_CHAR_LOC = 3;
-
-    const int RMC_SIZE = 11;
-    const int RMC_NS_CHAR_LOC = 3;
-    const int RMC_EW_CHAR_LOC = 5;
-
-    const int GGA_SIZE = 14;
-    const int GGA_NS_CHAR_LOC = 2;
-    const int GGA_EW_CHAR_LOC = 4;
-    const int GGA_OTHER = 8;
+    const int GLL_SIZE = 5, GLL_NS_CHAR_LOC = 1, GLL_EW_CHAR_LOC = 3;
+    const int RMC_SIZE = 11, RMC_NS_CHAR_LOC = 3, RMC_EW_CHAR_LOC = 5;
+    const int GGA_SIZE = 14, GGA_NS_CHAR_LOC = 2, GGA_EW_CHAR_LOC = 4, GGA_OTHER = 8;
 
     // Checks if second part of sendata is empty. Return if it is
     if (senData.second.empty())
