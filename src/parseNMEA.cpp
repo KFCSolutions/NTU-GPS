@@ -19,29 +19,36 @@ namespace NMEA
 
   bool isWellFormedSentence(std::string gpsData)
   {
-    const std::locale loc;
+
+    const int STRING_START = 0;
+    const int PREFIX_LENGTH = 3;
+    const int NMEA_TYPE_LENGTH = 3;
+    const int NMEA_TYPE_START = 3;
+    const int NMEA_SECTION_END = gpsData.length() - 3;
+    const int CHECKSUM_LOC1 = gpsData.length() - 2;
+    const int CHECKSUM_LOC2 = gpsData.length() - 1;
+    const int FIRST_CHARACTER_LENGTH = 1;
 
     // Checks to see if the first 3 characters of the GPS file contain $GP
-    if (gpsData.substr(0,3) != "$GP")
+    if (gpsData.substr(STRING_START,PREFIX_LENGTH) != "$GP")
       return false;
 
-    // Loops through the 3 characters after $GPS and checks if they are English alphabet characters
-    std::string indent = gpsData.substr(3,3);
-    for (std::string::iterator it=indent.begin(); it!=indent.end(); ++it)
-      if (!std::isalpha(*it,loc))
-        return false;
+    // Regex Check For Is Upper case
+    std::string indent = gpsData.substr(NMEA_TYPE_START,NMEA_TYPE_LENGTH);
+    if (!std::regex_match(indent, std::regex("[A-Z]{3,3}")))
+         return false;
 
     // Check if the third character from the end is an astrix
-    if (gpsData[gpsData.length() - 3] != '*') 
+    if (gpsData[NMEA_SECTION_END] != '*') 
       return false;
 
     // Check if the last two characters are valid hex values
-    if ((!isxdigit(gpsData[gpsData.length() - 2])) || !isxdigit(gpsData[gpsData.length() - 1]))
+    if ((!isxdigit(gpsData[CHECKSUM_LOC1])) || !isxdigit(gpsData[CHECKSUM_LOC2]))
       return false;
 
     // Sanitize the string and remove valid locations for * and $
-    gpsData.erase(gpsData.end() - 3);
-    gpsData.erase(0, 1);
+    gpsData.erase(NMEA_SECTION_END);
+    gpsData.erase(STRING_START, FIRST_CHARACTER_LENGTH);
 
     // Check to see if the new string contains * and $ and if it does return false
     if ((gpsData.find('*') != std::string::npos)  || (gpsData.find('$') != std::string::npos))
@@ -53,11 +60,19 @@ namespace NMEA
 
   bool hasValidChecksum(std::string gpsData)
   {
+    const int STRING_START = 0;
+    const int FIRST_CHARACTER_LENGTH = 1;
+    const int CHECKSUM_START = gpsData.length() - 2;
+    const int CHECKSUM_LENGTH = 2;
+    const int POST_CHECKSUM_DATA_START = gpsData.length() - 3;
+    const int POST_CHECKSUM_DATA_LENGTH = 3;
+
     // Get the checksum value from the string
-    std::string checkSum = gpsData.substr(gpsData.length() - 2,2);
+    std::string checkSum = gpsData.substr(CHECKSUM_START,CHECKSUM_LENGTH);
+
     // Remove the checksum value from the string along with the $ from the start
-    gpsData.erase(gpsData.length() - 3, 3);
-    gpsData.erase(0, 1);
+    gpsData.erase(POST_CHECKSUM_DATA_START, POST_CHECKSUM_DATA_LENGTH);
+    gpsData.erase(STRING_START, FIRST_CHARACTER_LENGTH);
 
     // XOR the string to create the checksum
     int lastNum = 0;
@@ -72,7 +87,7 @@ namespace NMEA
     // Check checksum from string and make it upper case
     std::for_each(checkSum.begin(), checkSum.end(), [](char & c) {
         c = ::toupper(c);
-        });
+    });
 
     // Cross check checksum from file and generated checksum
     if ((generatedCheckSum !=  checkSum)) 
@@ -138,9 +153,13 @@ namespace NMEA
   }
 
   GPS::Position convertPosition (SentenceData senData,long unsigned int size, int NS, int EW,float other = 0) {
+    
+    const std::string LAT_DATA = senData.second[NS - 1];
+    const std::string LONG_DATA = senData.second[EW - 1];
+    
     //Gets the degree conversion for the NMEA DATA 
-    float latitude = getDegreeConversion(senData.second[NS - 1]);
-    float longitude = getDegreeConversion(senData.second[EW - 1]);
+    float latitude = getDegreeConversion(LAT_DATA);
+    float longitude = getDegreeConversion(LONG_DATA);
 
     // Checks to see if the data has any invalid params
     if (senData.second.size() < size)
