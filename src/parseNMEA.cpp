@@ -1,17 +1,12 @@
-#include "earth.h"
 #include "parseNMEA.h"
-#include <bits/c++config.h>
 #include <ctype.h>
 #include <regex>
-#include <locale> 
 #include <cmath>
 #include <sstream>
 #include <iostream>
 #include <algorithm>
-#include "geometry.h"
-#include "earth.h"
-
 #include <stdexcept>
+
 std::string supported_formats[] = {"GLL", "GGA", "RMC"};
 
 namespace NMEA
@@ -177,17 +172,31 @@ namespace NMEA
 
   GPS::Position positionFromSentenceData(SentenceData senData)
   {
+
+    const int GLL_SIZE = 5;
+    const int GLL_NS_CHAR_LOC = 1;
+    const int GLL_EW_CHAR_LOC = 3;
+
+    const int RMC_SIZE = 11;
+    const int RMC_NS_CHAR_LOC = 3;
+    const int RMC_EW_CHAR_LOC = 5;
+
+    const int GGA_SIZE = 14;
+    const int GGA_NS_CHAR_LOC = 2;
+    const int GGA_EW_CHAR_LOC = 4;
+    const int GGA_OTHER = 8;
+
     // Checks if second part of sendata is empty. Return if it is
     if (senData.second.empty())
       throw std::invalid_argument("Filed Empty");
 
     //Need to fix these magic numbers. Calls and retuns the correct position for all supported formats
     if(senData.first == "GLL")
-      return convertPosition(senData, 5, 1, 3);
+      return convertPosition(senData, GLL_SIZE, GLL_NS_CHAR_LOC, GLL_EW_CHAR_LOC);
     else if(senData.first == "RMC")
-      return convertPosition(senData, 11, 3, 5); 
+      return convertPosition(senData, RMC_SIZE, RMC_NS_CHAR_LOC, RMC_EW_CHAR_LOC); 
     else if(senData.first == "GGA")
-      return convertPosition(senData, 14, 2, 4, std::stof(senData.second[8]));
+      return convertPosition(senData, GGA_SIZE, GGA_NS_CHAR_LOC, GGA_EW_CHAR_LOC, std::stof(senData.second[GGA_OTHER]));
     else
       throw std::invalid_argument("Invalid syntax.");
   }
